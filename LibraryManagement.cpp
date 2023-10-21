@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <ctime>
 #include <limits>
 #include <algorithm>
 #include <iomanip>
@@ -216,24 +217,24 @@ public:
 
             if (!borrowedItems.empty() || !returnedItems.empty()) {
                 std::cout << "Borrowed Items:\n";
-                std::cout << "-----------------\n";
-                std::cout << "|  ID  |   Title   |\n";
-                std::cout << "-----------------\n";
+                std::cout << "-------------------------------------------------\n";
+                std::cout << "| " << std::setw(4) << "ID" << " | " << std::setw(13) << "Title" << std::setw(15) << "| "<<std::setw(8)<<"Status"<<std::setw(5)<<" |\n";
+                std::cout << "-------------------------------------------------\n";
                 for (const auto& itemId : borrowedItems) {
                     for (const auto& item : items) {
                         if (item->getId() == itemId) {
-                            std::cout << "| " << std::setw(4) << item->getId() << " | " << std::setw(10) << item->getTitle().substr(0, 10) << " |\n";
+                            std::cout << "| " << std::setw(4) << item->getId() << " | " << std::setw(25) << item->getTitle().substr(0, 23) << " |"<<std::setw(14)<<" |\n";
                         }
                     }
                 }
                 for (const auto& itemId : returnedItems) {
                     for (const auto& item : items) {
                         if (item->getId() == itemId) {
-                            std::cout << "| " << std::setw(4) << item->getId() << " | " << std::setw(10) << item->getTitle().substr(0, 10) << " |\n";
+                            std::cout << "| " << std::setw(4) << item->getId() << " | " << std::setw(25) << item->getTitle().substr(0, 23) << " |"<<std::setw(11)<<"Returned"<<" |\n";
                         }
                     }
                 }
-                std::cout << "-----------------\n";
+                std::cout << "-------------------------------------------------\n";
             } else {
                 std::cout << "No items borrowed or returned.\n";
             }

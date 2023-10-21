@@ -3,26 +3,84 @@
 #include <ctime>
 #include <limits>
 #include <algorithm>
+#include <iomanip>
 
 class Item {
-public:
+private:
     std::string title;
     int id;
+
+public:
+    Item(const std::string& title, int id) : title(title), id(id) {}
+
+    const std::string& getTitle() const {
+        return title;
+    }
+
+    int getId() const {
+        return id;
+    }
 };
 
 class Book : public Item {
-public:
+private:
     std::string author;
     bool isAvailable;
     int borrowerId;
-    std::time_t dueDate;
+
+public:
+    Book(const std::string& title, int id, const std::string& author)
+        : Item(title, id), author(author), isAvailable(true), borrowerId(-1) {}
+
+    const std::string& getAuthor() const {
+        return author;
+    }
+
+    bool getIsAvailable() const {
+        return isAvailable;
+    }
+
+    int getBorrowerId() const {
+        return borrowerId;
+    }
+
+    void setAvailability(bool available) {
+        isAvailable = available;
+    }
+
+    void setBorrower(int memberId) {
+        borrowerId = memberId;
+    }
 };
 
 class Member {
-public:
+private:
     int memberId;
-    std::vector<int> currentlyBorrowedBooks;
-    std::vector<std::pair<int, std::time_t>> borrowingHistory;
+    std::vector<int> borrowedBooks;
+    std::vector<int> returnedBooks;
+
+public:
+    Member(int memberId) : memberId(memberId) {}
+
+    int getMemberId() const {
+        return memberId;
+    }
+
+    const std::vector<int>& getBorrowedBooks() const {
+        return borrowedBooks;
+    }
+
+    const std::vector<int>& getReturnedBooks() const {
+        return returnedBooks;
+    }
+
+    void borrowBook(int bookId) {
+        borrowedBooks.push_back(bookId);
+    }
+
+    void returnBook(int bookId) {
+        returnedBooks.push_back(bookId);
+    }
 };
 
 class Library {
@@ -30,24 +88,14 @@ private:
     std::vector<Book> books;
     std::vector<Member> members;
     int lastMemberId;
-    float lateFeePerDay;  
-
-    bool isMemberValid(int memberId) {
-        auto it = std::find_if(members.begin(), members.end(),
-            [memberId](const Member& member) {
-                return member.memberId == memberId;
-            });
-
-        return it != members.end();
-    }
 
 public:
-    Library(float lateFeeRate) : lastMemberId(1000), lateFeePerDay(lateFeeRate) {}
+    Library() : lastMemberId(1000) {}
 
-    void addBook(std::string title, std::string author, int quantity) {
+    void addBook(const std::string& title, const std::string& author, int quantity) {
         for (int i = 0; i < quantity; ++i) {
             int id = generateBookId();
-            Book newBook = {title, id, author, true, -1, 0};
+            Book newBook(title, id, author);
             books.push_back(newBook);
             std::cout << "Book added successfully. ID: " << id << "\n";
         }
@@ -60,13 +108,19 @@ public:
         }
 
         std::cout << "Library Books:\n";
+        std::cout << "---------------------------------------------------------\n";
+        std::cout << "|  ID  |          Title          |        Author        |  Availability  |\n";
+        std::cout << "---------------------------------------------------------\n";
         for (const auto& book : books) {
-            std::cout << "Title: " << book.title << ", Author: " << book.author
-                      << ", ID: " << book.id << ", Available: " << (book.isAvailable ? "Yes" : "No");
-            if (!book.isAvailable)
-                std::cout << ", Borrower ID: " << book.borrowerId << ", Due Date: " << std::ctime(&book.dueDate);
-            std::cout << "\n";
+            std::cout << "| " << std::setw(4) << book.getId() << " | " << std::setw(23) << book.getTitle().substr(0, 20) << " | " 
+                      << std::setw(20) << book.getAuthor().substr(0, 20) << " | " << std::setw(13);
+            if (book.getIsAvailable()) {
+                std::cout << "Yes |\n";
+            } else {
+                std::cout << "No  |\n";
+            }
         }
+        std::cout << "---------------------------------------------------------\n";
     }
 
     int generateBookId() {
@@ -74,27 +128,14 @@ public:
     }
 
     void borrowBook(int bookId, int memberId) {
-        if (!isMemberValid(memberId)) {
-            std::cout << "Invalid Member ID. Please try again.\n";
-            return;
-        }
-
         for (auto& book : books) {
-            if (book.id == bookId) {
-                if (book.isAvailable) {
-                    book.isAvailable = false;
-                    book.borrowerId = memberId;
-                    std::time_t now = std::time(0);
-                    book.dueDate = now + 7 * 24 * 60 * 60;  // 7 days
+            if (book.getId() == bookId) {
+                if (book.getIsAvailable()) {
+                    book.setAvailability(false);
+                    book.setBorrower(memberId);
+                    members[memberId - 1001].borrowBook(bookId); // Adjust index
                     std::cout << "Book with ID " << bookId << " borrowed successfully by Member ID " << memberId << ".\n";
-
-                    for (auto& member : members) {
-                        if (member.memberId == memberId) {
-                            member.currentlyBorrowedBooks.push_back(bookId);
-                            member.borrowingHistory.push_back({bookId, now});
-                            return;
-                        }
-                    }
+                    return;
                 } else {
                     std::cout << "Book with ID " << bookId << " is not available for borrowing.\n";
                 }
@@ -105,36 +146,14 @@ public:
     }
 
     void returnBook(int bookId, int memberId) {
-        if (!isMemberValid(memberId)) {
-            std::cout << "Invalid Member ID. Please try again.\n";
-            return;
-        }
-
         for (auto& book : books) {
-            if (book.id == bookId) {
-                if (!book.isAvailable && book.borrowerId == memberId) {
-                    book.isAvailable = true;
-                    book.borrowerId = -1;
-                    std::time_t now = std::time(0);
-                    float lateFee = calculateLateFee(book.dueDate, now);
-                    if (lateFee > 0) {
-                        std::cout << "Late Fee for Book with ID " << bookId << ": $" << lateFee << "\n";
-                    }
+            if (book.getId() == bookId) {
+                if (!book.getIsAvailable() && book.getBorrowerId() == memberId) {
+                    book.setAvailability(true);
+                    book.setBorrower(-1);
+                    members[memberId - 1001].returnBook(bookId); // Adjust index
                     std::cout << "Book with ID " << bookId << " returned successfully by Member ID " << memberId << ".\n";
-
-                    for (auto& member : members) {
-                        if (member.memberId == memberId) {
-                            auto& currentlyBorrowed = member.currentlyBorrowedBooks;
-                            auto it = std::find(currentlyBorrowed.begin(), currentlyBorrowed.end(), bookId);
-                            if (it != currentlyBorrowed.end())
-                                currentlyBorrowed.erase(it);
-
-                            auto& history = member.borrowingHistory;
-                            history.push_back({bookId, now});
-
-                            return;
-                        }
-                    }
+                    return;
                 } else {
                     std::cout << "Book with ID " << bookId << " is not borrowed by Member ID " << memberId << ".\n";
                 }
@@ -144,66 +163,65 @@ public:
         std::cout << "Book with ID " << bookId << " not found.\n";
     }
 
-    float calculateLateFee(std::time_t dueDate, std::time_t returnDate) {
-        if (returnDate > dueDate) {
-            double diffSeconds = std::difftime(returnDate, dueDate);
-            double diffDays = diffSeconds / (60 * 60 * 24);
-            return static_cast<float>(diffDays) * lateFeePerDay;
-        }
-        return 0.0;
-    }
-    
-void printLibraryCard(int memberId) {
-    if (!isMemberValid(memberId)) {
-        std::cout << "Invalid Member ID. Please try again.\n";
-        return;
-    }
-
-    for (const auto& member : members) {
-        if (member.memberId == memberId) {
-            std::cout << "Library Card for Member ID " << memberId << ":\n";
-            std::cout << "Currently Borrowed Books:\n";
-            for (const auto& bookId : member.currentlyBorrowedBooks) {
-                for (const auto& book : books) {
-                    if (book.id == bookId) {
-                        std::cout << "Title: " << book.title << ", Author: " << book.author
-                                  << ", ID: " << book.id << ", Due Date: " << std::ctime(&book.dueDate) << "\n";
-                    }
-                }
-            }
-
-            std::cout << "\nBorrowing History:\n";
-            for (const auto& entry : member.borrowingHistory) {
-                for (const auto& book : books) {
-                    if (book.id == entry.first) {
-                        std::cout << "Title: " << book.title << ", Author: " << book.author
-                                  << ", ID: " << book.id;
-
-                        if (book.isAvailable)
-                            std::cout << ", Borrowed On: " << std::ctime(&entry.second) << " (Not Returned)\n";
-                        else
-                            std::cout << ", Returned On: " << std::ctime(&entry.second) << "\n";
-                    }
-                }
-            }
-
+    void printLibraryCard(int memberId) {
+        if (memberId < 1001 || memberId > lastMemberId) {
+            std::cout << "Invalid Member ID. Please try again.\n";
             return;
         }
+
+        int memberIndex = memberId - 1001; // Adjust index
+        if (memberIndex >= 0 && memberIndex < members.size()) {
+            const Member& member = members[memberIndex];
+            std::cout << "Library Card for Member ID " << memberId << ":\n";
+            
+            const std::vector<int>& borrowedBooks = member.getBorrowedBooks();
+            const std::vector<int>& returnedBooks = member.getReturnedBooks();
+            
+            if (!borrowedBooks.empty()) {
+                std::cout << "Borrowed Books:\n";
+                std::cout << "-----------------\n";
+                std::cout << "|  ID  |   Title   |\n";
+                std::cout << "-----------------\n";
+                for (const auto& bookId : borrowedBooks) {
+                    for (const auto& book : books) {
+                        if (book.getId() == bookId) {
+                            std::cout << "| " << std::setw(4) << book.getId() << " | " << std::setw(10) << book.getTitle().substr(0, 10) << " |\n";
+                        }
+                    }
+                }
+                std::cout << "-----------------\n";
+            }
+            
+            if (!returnedBooks.empty()) {
+                std::cout << "Returned Books:\n";
+                std::cout << "-----------------\n";
+                std::cout << "|  ID  |   Title   |\n";
+                std::cout << "-----------------\n";
+                for (const auto& bookId : returnedBooks) {
+                    for (const auto& book : books) {
+                        if (book.getId() == bookId) {
+                            std::cout << "| " << std::setw(4) << book.getId() << " | " << std::setw(10) << book.getTitle().substr(0, 10) << " |\n";
+                        }
+                    }
+                }
+                std::cout << "-----------------\n";
+            }
+            return;
+        }
+        std::cout << "Member with ID " << memberId << " not found.\n";
     }
-    std::cout << "Member with ID " << memberId << " not found.\n";
-}
 
     void registerMember() {
-        int memberId = ++lastMemberId;
-        Member newMember = {memberId, {}, {}};
+        int memberId = lastMemberId + 1;
+        Member newMember(memberId);
         members.push_back(newMember);
+        lastMemberId = memberId;
         std::cout << "Member registered successfully. Member ID: " << memberId << "\n";
     }
 };
 
 int main() {
-    float lateFeeRate = 0.1;  // Example late fee rate: $0.1 per day
-    Library library(lateFeeRate);
+    Library library;
 
     int choice;
     do {

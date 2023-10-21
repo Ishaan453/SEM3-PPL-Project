@@ -1,76 +1,48 @@
 # Library Management System
 
-## Overview
-The **Library Management System** is a C++ program that simulates the operations of a library. It allows for the management of books, library members, book borrowing, and late fee calculation.
+## Introduction
+
+This C++ program simulates a Library Management System, allowing librarians to manage books and library members. It offers functionalities such as adding books, borrowing and returning books, displaying available books, registering new members, and printing library cards.
 
 ## Classes
 
 ### `Item`
-- Base class for library items.
-- Attributes:
-  - `title` (string): The title of the item.
-  - `id` (int): Unique identifier for the item.
 
-### `Book`
-- Derived from the `Item` class.
-- Additional attributes:
-  - `author` (string): The author of the book.
-  - `isAvailable` (bool): Availability status of the book.
-  - `borrowerId` (int): ID of the member who borrowed the book.
-  - `dueDate` (std::time_t): Due date for the borrowed book.
+- `Item` is the base class for books and provides attributes like `title` and `id`.
+- It includes a constructor to initialize these attributes and accessor methods to get the title and ID.
+
+### `Book` (Inherits from `Item`)
+
+- `Book` is a derived class from `Item` and represents individual books in the library.
+- It includes additional attributes such as `author`, `isAvailable`, and `borrowerId`.
+- A constructor initializes these attributes, and accessor methods allow access to book details.
+- Additionally, `Book` provides methods to set book availability and borrower information.
 
 ### `Member`
-- Represents library members.
-- Attributes:
-  - `memberId` (int): Unique member identifier.
-  - `currentlyBorrowedBooks` (vector of ints): IDs of books currently borrowed.
-  - `borrowingHistory` (vector of pairs): Borrowing history with book IDs and timestamps.
+
+- `Member` class represents library members and stores information about the books they have borrowed and returned.
+- The constructor initializes a member with a unique `memberId`.
+- Accessor methods allow access to member details, borrowed books, and returned books.
+- Methods like `borrowBook` and `returnBook` add book IDs to the respective lists when books are borrowed or returned.
 
 ### `Library`
-- Core component of the system.
-- Manages books, members, and library operations.
-- Constructor initializes the late fee rate.
-- Methods include adding books, displaying books, borrowing books, returning books, calculating late fees, printing library cards, and registering members.
 
-## Initialization
-- The program begins by setting a late fee rate, e.g., $0.10 per day.
-- An instance of the `Library` class is created with the provided late fee rate.
+- `Library` manages the library's collection of books, members, and provides various functionalities.
+- It includes attributes for storing books, members, and the last assigned member ID.
+- The `addBook` function allows librarians to add books to the library, generating unique book IDs for each.
+- `displayBooks` presents a well-formatted table of available books.
+- `generateBookId` calculates a unique book ID.
+- `borrowBook` lets members borrow available books and updates the book's status and borrower's records.
+- `returnBook` allows members to return books, updating availability and recording the transaction.
+- `printLibraryCard` prints a library card for a specific member, displaying their borrowed and returned books.
+- `registerMember` adds new members to the library and generates unique member IDs.
 
-## Menu System
-- The main function presents a menu system, allowing users to choose from various library-related operations.
+## Main Function
 
-## Menu Options
-1. **Display Books**: Shows a list of all available books in the library.
-2. **Borrow Book**: Allows a member to borrow a book, updating book availability and member records.
-3. **Return Book**: Allows a member to return a book, calculating late fees if applicable.
-4. **Add Book**: Lets the librarian add new books to the library.
-5. **Register Member**: Allows the librarian to register new members.
-6. **Print Library Card**: Generates a library card for a member, displaying their currently borrowed books and borrowing history.
-7. **Exit**: Exits the program.
-
-## Functionality
-- **Adding Books**: The `addBook` function adds books to the library, specifying the title, author, and quantity. It generates unique book IDs for each book.
-- **Borrowing Books**: The `borrowBook` function allows a member to borrow a book by providing the book ID and their member ID. It updates book availability, borrower information, and due dates.
-- **Returning Books**: The `returnBook` function enables members to return books. It calculates late fees for overdue books and updates the library records.
-- **Late Fee Calculation**: The `calculateLateFee` function calculates late fees based on the difference between the due date and the return date.
-- **Printing Library Card**: The `printLibraryCard` function generates a library card for a member, displaying their currently borrowed books and borrowing history.
-- **Registering Members**: The `registerMember` function allows the librarian to register new members, assigning them unique member IDs.
-
-## Usage
-- Users can select menu options by entering the corresponding numeric choice.
-
-## Exit
-- The program continues to run until the user selects the "Exit" option.
-
-## Error Handling
-- The program provides error messages for various scenarios, such as invalid member IDs or unavailable books.
-
-## Dependencies
-- The code uses C++ standard libraries for data structures and time handling.
-
-## Notes
-- The code uses Unix timestamps to represent time. This may need adjustment for specific time zone considerations.
+- The `main` function serves as the program's entry point.
+- Users interact with the program through a menu offering options to display books, borrow books, return books, add books, register members, print library cards, or exit.
+- A `do-while` loop ensures that the program continues running until the user chooses to exit.
 
 ---
 
-This documentation provides an overview of the structure and functionality of the Library Management System. Users can follow the menu system to interact with the library, managing books and members.
+This program demonstrates a basic library management system with an intuitive command-line interface. It provides essential functions for managing books and members, making it useful for small libraries or educational purposes.
